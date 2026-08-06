@@ -67,3 +67,9 @@ variable "tags" {
     ManagedBy   = "terraform"
   }
 }
+
+variable "eks_module_version" {
+  description = "Version of the EKS module to use"
+  type        = string
+  default     = "21.24.1"
+}

@@ -8,7 +8,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "kurgan-state-prod666-us-east-1"
+    bucket = "huykal-us-east-1"
     key    = "terraform-micro/terraform.tfstate"
     region = "us-east-1"
   }

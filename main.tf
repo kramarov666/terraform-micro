@@ -28,7 +28,7 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+  version = "21.24.1"
 
   name               = "${local.name_prefix}-eks"
   kubernetes_version = var.cluster_version
@@ -38,6 +38,24 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = true
 
+  #Must be disabled
+  endpoint_public_access = true
+
+  compute_config = {
+    enabled = false
+  }
+
+  addons = {
+    coredns = {}
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute = true
+    }
+  }
+
   eks_managed_node_groups = {
     main = {
       name           = "main-ng"
@@ -45,10 +63,44 @@ module "eks" {
       min_size       = var.node_group_min_size
       max_size       = var.node_group_max_size
       desired_size   = var.node_group_desired_size
+      subnet_ids     = module.vpc.private_subnet_ids
 
-      subnet_ids = module.vpc.private_subnet_ids
+      block_device_mappings = {
+        ebs = {
+          device_name = "/dev/xvda"
+          ebs = {
+            encrypted  = true
+            kms_key_id = aws_kms_key.ebs.arn
+          }
+        }
+      }
     }
   }
 
   tags = var.tags
+}
+
+resource "aws_iam_policy" "eks_additional" {
+  name        = "${local.name_prefix}-eks-additional-policy"
+  description = "Additional permissions attached to the EKS cluster IAM role"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      "Action" : [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ListGrants",
+        "kms:DescribeKey"
+      ],
+      "Effect" : "Allow",
+      "Resource" : aws_kms_key.ebs.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_additional" {
+  role       = module.eks.cluster_iam_role_name
+  policy_arn = aws_iam_policy.eks_additional.arn
 }
