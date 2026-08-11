@@ -42,9 +42,6 @@ jobs:
         path: tf_output.tfplan
   
   terraform-apply:
-    approvers: kramarov666
-    minimum-approvals: 1
-    environment: prod
     runs-on: ubuntu-latest
     needs: terraform-plan
     steps:
