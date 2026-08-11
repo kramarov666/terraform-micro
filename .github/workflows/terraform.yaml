@@ -14,6 +14,9 @@ jobs:
       uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: ${{ env.TF_VERSION }}
+    
+    - name: test
+      run: echo ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v6.2.3
