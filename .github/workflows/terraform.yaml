@@ -1,10 +1,10 @@
 name: terraform
-runs-on: ubuntu-latest
 env:
   TF_VERSION: 1.15
 
 jobs:
   terraform:
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v4
