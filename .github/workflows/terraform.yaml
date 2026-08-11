@@ -1,7 +1,7 @@
-- name: terraform
-  runs-on: ubuntu-latest
-  environment:
-    TF_VERSION: 1.15
+name: terraform
+runs-on: ubuntu-latest
+environment:
+  TF_VERSION: 1.15
 
 jobs:
   terraform:
