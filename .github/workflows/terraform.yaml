@@ -66,6 +66,12 @@ jobs:
       with:
         name: tfplan
 
+    - name: Terraform Init
+      id: init
+      run: terraform init -input=false
+
     - name: Terraform Apply
       id: apply
-      run: terraform apply -no-color -input=false tf_output.tfplan
+      approvers: kramarov666
+      minimum-approvals: 1
+      run: terraform apply -no-color -input=false tf_output.tfplan -auto-approve
