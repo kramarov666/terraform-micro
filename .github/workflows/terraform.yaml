@@ -3,7 +3,8 @@ on: workflow_dispatch
 env:
   TF_VERSION: 1.15
 jobs:
-  terraform:
+
+  terraform-plan:
     environment: prod
     runs-on: ubuntu-latest
     steps:
@@ -14,9 +15,6 @@ jobs:
       uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: ${{ env.TF_VERSION }}
-    
-    - name: test
-      run: echo ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v6.2.3
@@ -24,11 +22,6 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-
-    - name: Terraform fmt
-      id: fmt
-      run: terraform fmt -check
-      continue-on-error: true
 
     - name: Terraform Init
       id: init
@@ -40,5 +33,39 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -no-color -input=false
-      continue-on-error: true
+      run: terraform plan -no-color -input=false --out=tf_output.tfplan
+    
+    - name: Upload file
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan
+        path: tf_output.tfplan
+  
+  terraform-apply:
+    environment: prod
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    steps:
+
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v6.2.3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+
+    - name: Download file
+      uses: actions/download-artifact@v4
+      with:
+        name: tfplan
+
+    - name: Terraform Apply
+      id: apply
+      run: terraform apply -no-color -input=false tf_output.tfplan
