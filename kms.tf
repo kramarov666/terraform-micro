@@ -38,10 +38,10 @@ resource "aws_kms_key_policy" "ebs" {
         Effect = "Allow"
 
         Principal = {
-          AWS = [
-            module.eks.node_iam_role_arn,
-            module.eks.cluster_iam_role_arn 
-            ]
+          AWS = "arn:aws:iam:${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+
+
+
         }
 
         Action = [
@@ -53,9 +53,12 @@ resource "aws_kms_key_policy" "ebs" {
           "kms:CreateGrant"
         ]
 
-        Resource = "*"
-
-      }
+        Resource = aws_kms_key.ebs.arn
+        Condition = {
+          Bool = {
+            "kms:GrantIsForAWSResource" = true
+          }
+        }
     ]
   })
 }
