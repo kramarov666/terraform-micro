@@ -38,8 +38,10 @@ resource "aws_kms_key_policy" "ebs" {
         Effect = "Allow"
 
         Principal = {
-          AWS = [module.eks.node_iam_role_arn,
-                module.eks.cluster_iam_role_arn]
+          AWS = [
+            module.eks.node_iam_role_arn,
+            module.eks.cluster_iam_role_arn 
+            ]
         }
 
         Action = [
