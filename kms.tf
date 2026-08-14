@@ -39,9 +39,6 @@ resource "aws_kms_key_policy" "ebs" {
 
         Principal = {
           AWS = "arn:aws:iam:${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
-
-
-
         }
 
         Action = [
@@ -59,6 +56,7 @@ resource "aws_kms_key_policy" "ebs" {
             "kms:GrantIsForAWSResource" = true
           }
         }
+      }
     ]
   })
 }
