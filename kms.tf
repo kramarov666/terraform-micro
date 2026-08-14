@@ -38,7 +38,7 @@ resource "aws_kms_key_policy" "ebs" {
         Effect = "Allow"
 
         Principal = {
-          Service = "ec2.amazonaws.com"
+          AWS = "*"
         }
 
         Action = [

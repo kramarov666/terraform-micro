@@ -13,7 +13,7 @@ variable "project_name" {
 variable "environment" {
   description = "Deployment environment"
   type        = string
-  default     = "dev"
+  default     = "prod"
 }
 
 variable "vpc_cidr" {
@@ -63,7 +63,7 @@ variable "tags" {
   type        = map(string)
   default = {
     Project     = "terraform-micro"
-    Environment = "dev"
+    Environment = "prod"
     ManagedBy   = "terraform"
   }
 }
