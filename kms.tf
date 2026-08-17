@@ -34,7 +34,7 @@ resource "aws_kms_key_policy" "ebs" {
         Resource = "*"
       },
       {
-        Sid    = "AllowEC2Service"
+        Sid    = "AllowAutoscalingService"
         Effect = "Allow"
 
         Principal = {
@@ -51,11 +51,6 @@ resource "aws_kms_key_policy" "ebs" {
         ]
 
         Resource = aws_kms_key.ebs.arn
-        Condition = {
-          Bool = {
-            "kms:GrantIsForAWSResource" = true
-          }
-        }
       }
     ]
   })
