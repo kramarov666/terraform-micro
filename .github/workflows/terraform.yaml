@@ -1,16 +1,27 @@
 name: terraform
+
+concurrency:
+  group: terraform-prod
+  cancel-in-progress: true
+
 on: workflow_dispatch
+
 env:
   TF_VERSION: 1.15
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
 
   terraform-plan:
-    environment: prod
+    environment: preprod
     runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v4
-    
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
       with:
@@ -19,8 +30,8 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v6.2.3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ vars.TF_ROLE_ARN_READONLY }}
+        role-session-name: samplerolesession  
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Terraform Init
@@ -57,8 +68,8 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v6.2.3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: ${{ vars.TF_ROLE_ARN_ADMIN }}
+        role-session-name: samplerolesession
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Download file
