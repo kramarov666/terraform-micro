@@ -23,6 +23,11 @@ output "eks_cluster_endpoint" {
   value       = module.eks.cluster_endpoint
 }
 
+output "eks_cluster_certificate_authority_data" {
+  description = "EKS cluster certificate authority data"
+  value       = module.eks.cluster_certificate_authority_data
+}
+
 output "eks_cluster_security_group_id" {
   description = "EKS cluster security group ID"
   value       = module.eks.cluster_security_group_id

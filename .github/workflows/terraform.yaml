@@ -8,7 +8,8 @@ on: workflow_dispatch
 
 env:
   TF_VERSION: 1.15
-  TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/.terraform.d/plugin-cache
+  TF_PLUGIN_CACHE_DIR_PREFIX: /home/runner/work/terraform-micro/terraform-micro/
+  TF_PLUGIN_CACHE_DIR_SUFIX: /.terraform.d/plugin-cache
 
 permissions:
   id-token: write
@@ -16,9 +17,17 @@ permissions:
 
 jobs:
 
-  terraform-plan:
+  terraform-eks-plan:
     environment: preprod
     runs-on: ubuntu-latest
+    env: 
+      TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/eks/.terraform.d/plugin-cache
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./eks
+  
     steps:
 
     - uses: actions/checkout@v4
@@ -35,15 +44,15 @@ jobs:
         role-session-name: tf-session
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
     
-    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
+    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}eks${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
 
     - name: Cache Terraform
       uses: actions/cache@v6
       with:
-        path: ${{ env.TF_PLUGIN_CACHE_DIR }}
-        key: terraform-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
+        path: ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}eks${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
+        key: terraform-eks-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
         restore-keys: |
-          terraform-${{ runner.os }}-
+          terraform-eks-${{ runner.os }}-
     
     - name: Terraform Init
       id: init
@@ -55,19 +64,27 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -no-color -input=false --out=tf_output.tfplan
+      run: terraform plan -no-color -input=false -var="cicd_admin_role_arn=${{ vars.TF_ROLE_ARN_READONLY }}" --out=eks_tf_output.tfplan
     
     - name: Upload file
       uses: actions/upload-artifact@v6
       with:
-        name: tfplan
-        path: tf_output.tfplan
+        name: eks-tfplan
+        path: eks/eks_tf_output.tfplan
         retention-days: 1
 
-  terraform-apply:
+  terraform-eks-apply:
     runs-on: ubuntu-latest
     environment: prod
-    needs: terraform-plan
+    needs: terraform-eks-plan
+    env: 
+      TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/eks/.terraform.d/plugin-cache
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./eks
+  
     steps:
 
     - uses: actions/checkout@v4
@@ -85,19 +102,20 @@ jobs:
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Download file
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
-        name: tfplan
-
-    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
+        name: eks-tfplan
+        path: eks
+  
+    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}eks${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
 
     - name: Cache Terraform
       uses: actions/cache@v6
       with:
-        path: ${{ env.TF_PLUGIN_CACHE_DIR }}
-        key: terraform-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
+        path: ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}eks${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
+        key: terraform-eks-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
         restore-keys: |
-            terraform-${{ runner.os }}-
+            terraform-eks-${{ runner.os }}-
     
     - name: Terraform Init
       id: init
@@ -105,4 +123,143 @@ jobs:
 
     - name: Terraform Apply
       id: apply
-      run: terraform apply -no-color tf_output.tfplan
+      run: terraform apply -no-color eks_tf_output.tfplan
+  
+  terraform-argocd-plan:
+    environment: preprod
+    runs-on: ubuntu-latest
+    needs: terraform-eks-apply
+    env: 
+      TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/argocd/.terraform.d/plugin-cache
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./argocd
+  
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v6.2.3
+      with:
+        role-to-assume: ${{ vars.TF_ROLE_ARN_READONLY }}
+        role-session-name: tf-session
+        aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+    
+    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}argocd${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
+
+    - name: Cache Terraform
+      uses: actions/cache@v6
+      with:
+        path: ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}argocd${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
+        key: terraform-argocd-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
+        restore-keys: |
+          terraform-argocd-${{ runner.os }}-
+    
+    - name: Terraform Init
+      id: init
+      run: terraform init -input=false --lockfile=readonly
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+    - name: Terraform Plan
+      id: plan
+      env:
+        TF_VAR_k8s_git_repository_ssh_private_key: ${{ secrets.K8S_REPO_SSH_KEY }}
+      run: terraform plan -no-color -input=false --out=argocd_tf_output.tfplan
+
+    - name: Upload file
+      uses: actions/upload-artifact@v6
+      with:
+        name: argocd-tfplan
+        path: argocd/argocd_tf_output.tfplan
+        retention-days: 1
+  
+  terraform-argocd-apply:
+    runs-on: ubuntu-latest
+    environment: prod
+    needs: terraform-argocd-plan
+    env:
+      TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/argocd/.terraform.d/plugin-cache
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./argocd
+  
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v6.2.3
+      with:
+        role-to-assume: ${{ vars.TF_ROLE_ARN_READONLY }}
+        role-session-name: tf-sesssion
+        aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+
+    - name: Download file
+      uses: actions/download-artifact@v8
+      with:
+        name: argocd-tfplan
+        path: argocd
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v5.1.0
+      with:
+        version: '1.36'
+
+    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}argocd${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
+
+    - name: Cache Terraform
+      uses: actions/cache@v6
+      with:
+        path: ${{ env.TF_PLUGIN_CACHE_DIR_PREFIX }}argocd${{ env.TF_PLUGIN_CACHE_DIR_SUFIX }}
+        key: terraform-argocd-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
+        restore-keys: |
+            terraform-argocd-${{ runner.os }}-
+    
+    - name: Terraform Init
+      id: init
+      run: terraform init -input=false -lockfile=readonly
+
+    - name: Render repository SSH key
+      id: render-ssh-key
+      env:
+        K8S_REPO_SSH_KEY: ${{ secrets.K8S_REPO_SSH_KEY }}
+      run: |
+        python3 - <<'PY'
+        import os
+        import textwrap
+        from pathlib import Path
+
+        manifest = Path("manifests/argocd/repo-secret.yaml")
+        content = manifest.read_text()
+        placeholder = "    SSH_KEY_PLACEHOLDER"
+        ssh_key = os.environ["K8S_REPO_SSH_KEY"]
+
+        if content.count(placeholder) != 1:
+            raise SystemExit(f"Expected exactly one {placeholder} in {manifest}")
+
+        indented_ssh_key = textwrap.indent(ssh_key.rstrip("\r\n"), "    ")
+        manifest.write_text(content.replace(placeholder, indented_ssh_key))
+        PY
+
+    - name: Terraform Apply
+      id: apply
+      run: terraform apply -no-color argocd_tf_output.tfplan
+  

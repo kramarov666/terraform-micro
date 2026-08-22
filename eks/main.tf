@@ -16,7 +16,7 @@ locals {
 }
 
 module "vpc" {
-  source = "./modules/vpc"
+  source = "../modules/vpc"
 
   name                 = local.name_prefix
   vpc_cidr             = var.vpc_cidr
@@ -80,6 +80,11 @@ module "eks" {
   tags = var.tags
 }
 
+resource "aws_eks_access_entry" "devops" {
+  cluster_name      = module.eks.cluster_name
+  principal_arn     = "arn:aws:iam::326130805573:user/devops"
+}
+
 resource "aws_iam_policy" "eks_additional" {
   name        = "${local.name_prefix}-eks-additional-policy"
   description = "Additional permissions attached to the EKS cluster IAM role"
@@ -103,4 +108,24 @@ resource "aws_iam_policy" "eks_additional" {
 resource "aws_iam_role_policy_attachment" "eks_additional" {
   role       = module.eks.cluster_iam_role_name
   policy_arn = aws_iam_policy.eks_additional.arn
+}
+
+resource "aws_eks_access_policy_association" "eks-argrocd-cluster-access" {
+  cluster_name  = module.eks.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSArgoCDClusterPolicy"
+  principal_arn = var.cicd_admin_role_arn
+
+  access_scope {
+    type       = "cluster"
+  }
+}
+
+resource "aws_eks_access_policy_association" "eks-devops-cluster-access" {
+  cluster_name  = module.eks.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = "arn:aws:iam::326130805573:user/devops"
+
+  access_scope {
+    type       = "cluster"
+  }
 }
