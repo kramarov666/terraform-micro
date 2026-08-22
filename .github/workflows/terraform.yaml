@@ -40,6 +40,8 @@ jobs:
         role-to-assume: ${{ vars.TF_ROLE_ARN_READONLY }}
         role-session-name: tf-session
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+
+    - run: ls -la ../modules/vpc
     
     - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
 
