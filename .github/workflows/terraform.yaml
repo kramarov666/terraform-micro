@@ -63,13 +63,13 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -no-color -input=false --out=tf_output.tfplan
+      run: terraform plan -no-color -input=false --out=eks_tf_output.tfplan
     
     - name: Upload file
       uses: actions/upload-artifact@v6
       with:
         name: tfplan
-        path: tf_output.tfplan
+        path: eks/eks_tf_output.tfplan
         retention-days: 1
 
   terraform-apply:
@@ -119,4 +119,4 @@ jobs:
 
     - name: Terraform Apply
       id: apply
-      run: terraform apply -no-color tf_output.tfplan
+      run: terraform apply -no-color eks_tf_output.tfplan
