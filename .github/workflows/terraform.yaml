@@ -99,10 +99,11 @@ jobs:
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Download file
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: tfplan
-
+        path: eks
+  
     - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
 
     - name: Cache Terraform
