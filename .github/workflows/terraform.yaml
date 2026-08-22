@@ -8,6 +8,7 @@ on: workflow_dispatch
 
 env:
   TF_VERSION: 1.15
+  TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/.terraform.d/plugin-cache
 
 permissions:
   id-token: write
@@ -31,12 +32,22 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v6.2.3
       with:
         role-to-assume: ${{ vars.TF_ROLE_ARN_READONLY }}
-        role-session-name: samplerolesession  
+        role-session-name: tf-session
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+    
+    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
 
+    - name: Cache Terraform
+      uses: actions/cache@v6
+      with:
+        path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+        key: terraform-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
+        restore-keys: |
+          terraform-${{ runner.os }}-
+    
     - name: Terraform Init
       id: init
-      run: terraform init -input=false
+      run: terraform init -input=false --lockfile=readonly
 
     - name: Terraform Validate
       id: validate
@@ -47,11 +58,12 @@ jobs:
       run: terraform plan -no-color -input=false --out=tf_output.tfplan
     
     - name: Upload file
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: tfplan
         path: tf_output.tfplan
-  
+        retention-days: 1
+
   terraform-apply:
     runs-on: ubuntu-latest
     environment: prod
@@ -59,7 +71,7 @@ jobs:
     steps:
 
     - uses: actions/checkout@v4
-    
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
       with:
@@ -69,7 +81,7 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v6.2.3
       with:
         role-to-assume: ${{ vars.TF_ROLE_ARN_ADMIN }}
-        role-session-name: samplerolesession
+        role-session-name: tf-sesssion
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
     - name: Download file
@@ -77,9 +89,19 @@ jobs:
       with:
         name: tfplan
 
+    - run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
+
+    - name: Cache Terraform
+      uses: actions/cache@v6
+      with:
+        path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+        key: terraform-${{ runner.os }}-${{ hashFiles('.terraform.lock.hcl') }}
+        restore-keys: |
+            terraform-${{ runner.os }}-
+    
     - name: Terraform Init
       id: init
-      run: terraform init -input=false
+      run: terraform init -input=false -lockfile=readonly
 
     - name: Terraform Apply
       id: apply
