@@ -8,7 +8,7 @@ on: workflow_dispatch
 
 env:
   TF_VERSION: 1.15
-  TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/.terraform.d/plugin-cache
+  TF_PLUGIN_CACHE_DIR: /home/runner/work/terraform-micro/terraform-micro/eks/.terraform.d/plugin-cache
 
 permissions:
   id-token: write
@@ -19,6 +19,12 @@ jobs:
   terraform-plan:
     environment: preprod
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./eks
+  
     steps:
 
     - uses: actions/checkout@v4
@@ -68,6 +74,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     needs: terraform-plan
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./eks
+  
     steps:
 
     - uses: actions/checkout@v4
