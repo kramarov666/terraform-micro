@@ -16,7 +16,7 @@ locals {
 }
 
 module "vpc" {
-  source = "./modules/vpc"
+  source = "../modules/vpc"
 
   name                 = local.name_prefix
   vpc_cidr             = var.vpc_cidr
