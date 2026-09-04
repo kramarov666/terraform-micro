@@ -81,8 +81,8 @@ module "eks" {
 }
 
 resource "aws_eks_access_entry" "devops" {
-  cluster_name      = module.eks.cluster_name
-  principal_arn     = "arn:aws:iam::326130805573:user/devops"
+  cluster_name  = module.eks.cluster_name
+  principal_arn = "arn:aws:iam::326130805573:user/devops"
 }
 
 resource "aws_iam_policy" "eks_additional" {
@@ -103,6 +103,54 @@ resource "aws_iam_policy" "eks_additional" {
       }
     ]
   })
+
+  tags = var.tags
+
+}
+
+resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
+  name   = "AWSLoadBalancerControllerIAMPolicy"
+  policy = file("${path.module}/files/AWSLoadBalancerControllerIAMPolicy.json")
+  tags   = var.tags
+}
+
+data "tls_certificate" "eks" {
+  url = module.eks.cluster_oidc_issuer_url
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  url             = module.eks.cluster_oidc_issuer_url
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  tags            = var.tags
+}
+
+resource "aws_iam_role" "aws_load_balancer_controller" {
+  name = "aws-load-balancer-controller"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+      Condition = {
+        StringEquals = {
+          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud" = "sts.amazonaws.com"
+          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+        }
+      }
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
+  role       = aws_iam_role.aws_load_balancer_controller.name
+  policy_arn = aws_iam_policy.AWSLoadBalancerControllerIAMPolicy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "eks_additional" {
@@ -116,7 +164,7 @@ resource "aws_eks_access_policy_association" "eks-argrocd-cluster-access" {
   principal_arn = var.cicd_admin_role_arn
 
   access_scope {
-    type       = "cluster"
+    type = "cluster"
   }
 }
 
@@ -126,6 +174,7 @@ resource "aws_eks_access_policy_association" "eks-devops-cluster-access" {
   principal_arn = "arn:aws:iam::326130805573:user/devops"
 
   access_scope {
-    type       = "cluster"
+    type = "cluster"
   }
 }
+
