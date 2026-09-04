@@ -115,7 +115,7 @@ resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
 }
 
 data "tls_certificate" "eks" {
-  url = module.eks.cluster_oidc_issuer_url
+  url = module.eks.oidc_provider_arn
 }
 
 resource "aws_iam_role" "aws_load_balancer_controller" {
@@ -127,12 +127,12 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
       Effect = "Allow"
       Action = "sts:AssumeRoleWithWebIdentity"
       Principal = {
-        Federated = module.eks.cluster_oidc_issuer_arn
+        Federated = module.eks.oidc_provider_arn
       }
       Condition = {
         StringEquals = {
-          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud" = "sts.amazonaws.com"
-          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+          "${replace(module.eks.oidc_provider_arn, "https://", "")}:aud" = "sts.amazonaws.com"
+          "${replace(module.eks.oidc_provider_arn, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
         }
       }
     }]
