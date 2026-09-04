@@ -32,3 +32,8 @@ output "eks_cluster_security_group_id" {
   description = "EKS cluster security group ID"
   value       = module.eks.cluster_security_group_id
 }
+
+output "ALB role ARN" {
+  description = "ARN of the ALB Ingress Controller IAM role"
+  value       = aws_iam_role.aws_load_balancer_controller.arn
+}
