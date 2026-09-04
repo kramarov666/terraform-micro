@@ -114,10 +114,6 @@ resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
   tags   = var.tags
 }
 
-data "tls_certificate" "eks" {
-  url = module.eks.oidc_provider_arn
-}
-
 resource "aws_iam_role" "aws_load_balancer_controller" {
   name = "aws-load-balancer-controller"
 
