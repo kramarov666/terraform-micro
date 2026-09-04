@@ -33,7 +33,7 @@ output "eks_cluster_security_group_id" {
   value       = module.eks.cluster_security_group_id
 }
 
-output "ALB role ARN" {
+output "alb_role_arn" {
   description = "ARN of the ALB Ingress Controller IAM role"
   value       = aws_iam_role.aws_load_balancer_controller.arn
 }
