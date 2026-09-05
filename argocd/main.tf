@@ -65,7 +65,7 @@ resource "null_resource" "kubernetes_manifest" {
         --name '${data.terraform_remote_state.eks.outputs.eks_cluster_name}' \
         --region '${var.aws_region}'
 
-      kubectl apply -f apps.yaml -f secrets.yaml
+      kubectl apply -f apps.yaml -f repo-secret.yaml
     EOT
   }
 }
