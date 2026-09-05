@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: administrative
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: HEAD
+    path: administrative
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: namespaces
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: HEAD
+    path: namespaces
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default

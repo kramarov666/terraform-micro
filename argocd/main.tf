@@ -48,7 +48,7 @@ resource "null_resource" "kubernetes_manifest" {
     cluster_name = data.terraform_remote_state.eks.outputs.eks_cluster_name
 
     manifest_hash = filesha256(
-      "${path.module}/manifests/argocd/namespaces.yaml"
+      "${path.module}/manifests/argocd/apps.yaml"
     )
     repo_secret_hash = sha256(var.k8s_git_repository_ssh_private_key)
   }
@@ -65,7 +65,7 @@ resource "null_resource" "kubernetes_manifest" {
         --name '${data.terraform_remote_state.eks.outputs.eks_cluster_name}' \
         --region '${var.aws_region}'
 
-      kubectl apply -f . --recursive
+      kubectl apply -f apps.yaml -f secrets.yaml
     EOT
   }
 }
