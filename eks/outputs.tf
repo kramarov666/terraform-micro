@@ -37,3 +37,13 @@ output "alb_role_arn" {
   description = "ARN of the ALB Ingress Controller IAM role"
   value       = aws_iam_role.aws_load_balancer_controller.arn
 }
+
+output "ebs_driver_role_arn" {
+  description = "ARN of the EBS CSI Driver IAM role"
+  value       = aws_iam_role.aws_ebs_csi_driver_role.arn
+}
+
+output "kms_ebs_key_arn" {
+  description = "ARN of the KMS key for EBS volume encryption"
+  value       = aws_kms_key.ebs.arn
+}
