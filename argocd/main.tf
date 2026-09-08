@@ -8,6 +8,15 @@ data "terraform_remote_state" "eks" {
   }
 }
 
+locals {
+  apps_manifest = templatefile(
+    "${path.module}/manifests/argocd/apps.yaml.tftpl",
+    {
+      cluster_name = data.terraform_remote_state.eks.outputs.eks_cluster_name
+    }
+  )
+}
+
 provider "helm" {
   kubernetes = {
     host                   = data.terraform_remote_state.eks.outputs.eks_cluster_endpoint
@@ -47,9 +56,7 @@ resource "null_resource" "kubernetes_manifest" {
   triggers = {
     cluster_name = data.terraform_remote_state.eks.outputs.eks_cluster_name
 
-    manifest_hash = filesha256(
-      "${path.module}/manifests/argocd/namespaces.yaml"
-    )
+    manifest_hash    = sha256(local.apps_manifest)
     repo_secret_hash = sha256(var.k8s_git_repository_ssh_private_key)
   }
 
@@ -65,7 +72,10 @@ resource "null_resource" "kubernetes_manifest" {
         --name '${data.terraform_remote_state.eks.outputs.eks_cluster_name}' \
         --region '${var.aws_region}'
 
-      kubectl apply -f namespaces.yaml -f repo-secret.yaml
+      kubectl apply -f repo-secret.yaml
+
+      printf '%s' '${replace(local.apps_manifest, "'", "'\\''")}' | kubectl apply -f -
+
     EOT
   }
 }
