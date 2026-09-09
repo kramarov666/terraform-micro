@@ -41,6 +41,7 @@ module "eks" {
   #Must be disabled
   endpoint_public_access = true
 
+  #Disable auto mode
   compute_config = {
     enabled = false
   }
@@ -53,6 +54,10 @@ module "eks" {
     kube-proxy = {}
     vpc-cni = {
       before_compute = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = aws_iam_role.aws_ebs_csi_driver_role.arn
     }
   }
 
@@ -113,6 +118,7 @@ resource "aws_iam_policy" "eks_additional" {
 
 }
 
+#Aws load balancer controller part
 resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
   name   = "AWSLoadBalancerControllerIAMPolicy"
   policy = file("${path.module}/files/AWSLoadBalancerControllerIAMPolicy.json")
@@ -152,6 +158,7 @@ resource "aws_iam_role_policy_attachment" "eks_additional" {
   policy_arn = aws_iam_policy.eks_additional.arn
 }
 
+#Argocd cluster access policy
 resource "aws_eks_access_policy_association" "eks-argrocd-cluster-access" {
   cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSArgoCDClusterPolicy"
@@ -162,6 +169,7 @@ resource "aws_eks_access_policy_association" "eks-argrocd-cluster-access" {
   }
 }
 
+#Access for devops user to the cluster
 resource "aws_eks_access_policy_association" "eks-devops-cluster-access" {
   cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
@@ -172,3 +180,75 @@ resource "aws_eks_access_policy_association" "eks-devops-cluster-access" {
   }
 }
 
+#EBS csi driver part
+
+resource "aws_iam_policy" "ebs_csi_driver" {
+  name = "AmazonEKS_EBS_CSI_DriverPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Sid    = "AllowEbsCsiDriverGrant"
+        Effect = "Allow"
+
+        Action = [
+          "kms:CreateGrant",
+          "kms:ListGrants",
+          "kms:RevokeGrant"
+        ]
+
+        Resource = aws_kms_key.ebs.arn
+      },
+      {
+        Sid    = "AllowForEbsCsiDriverEncryption"
+        Effect = "Allow"
+
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+
+        Resource = aws_kms_key.ebs.arn
+      }
+    ]
+  })
+}
+
+
+resource "aws_iam_role" "aws_ebs_csi_driver_role" {
+  name = "AmazonEKS_EBS_CSI_DriverRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Principal = {
+        Federated = module.eks.oidc_provider_arn
+      }
+      Condition = {
+        StringEquals = {
+          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:aud" = "sts.amazonaws.com"
+          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+        }
+      }
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "aws_ebs_csi_driver_role" {
+  role       = aws_iam_role.aws_ebs_csi_driver_role.name
+  policy_arn = aws_iam_policy.ebs_csi_driver.arn
+}
+
+resource "aws_iam_role_policy_attachment" "eks_ebs_csi_driver_additional" {
+  role       = aws_iam_role.aws_ebs_csi_driver_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"
+}

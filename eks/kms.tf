@@ -51,6 +51,24 @@ resource "aws_kms_key_policy" "ebs" {
         ]
 
         Resource = aws_kms_key.ebs.arn
+      },
+      {
+        Sid    = "AllowEbsCsiDriver"
+        Effect = "Allow"
+
+        Principal = {
+          AWS = aws_iam_role.aws_ebs_csi_driver_role.arn
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey",
+          "kms:CreateGrant"
+        ]
+
+        Resource = aws_kms_key.ebs.arn
       }
     ]
   })
