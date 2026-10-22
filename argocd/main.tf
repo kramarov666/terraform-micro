@@ -43,9 +43,15 @@ resource "helm_release" "argocd" {
   create_namespace = true
   version          = var.argocd_chart_version
 
-  #values = [
-  #  file("${path.module}/values/argocd.yaml")
-  #]
+  values = [
+    yamlencode({
+      controller = {
+        nodeSelector = {
+          name = "karpenter-free"
+        }
+      }
+    })
+  ]
 }
 
 resource "null_resource" "kubernetes_manifest" {

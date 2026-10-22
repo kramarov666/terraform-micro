@@ -87,6 +87,10 @@ module "eks" {
     }
   }
 
+  labels = {
+    name = "karpenter-free"
+  }
+
   tags = var.tags
 }
 
