@@ -38,8 +38,9 @@ resource "aws_subnet" "private" {
   availability_zone = var.azs[count.index]
 
   tags = merge(var.tags, {
-    Name = "${var.name}-private-${count.index + 1}"
-    Tier = "private"
+    Name                     = "${var.name}-private-${count.index + 1}"
+    Tier                     = "private"
+    "karpenter.sh/discovery" = var.karpenter_discovery_tag
   })
 }
 

@@ -3,12 +3,26 @@ kind: Application
 metadata:
   name: administrative
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
     repoURL: git@github.com:kramarov666/miracle6-k8s.git
     targetRevision: HEAD
     path: administrative
+    helm:
+      parameters:
+        - name: kmsKeyId
+          value: "${kms_key_id}"
+        - name: karpenterNodeRole
+          value: "${karpenter_node_role_name}"
+        - name: clusterName
+          value: "${cluster_name}"
+        - name: loadBalancerRoleArn
+          value: "${alb_role_arn}"
+        - name: ebsCsiDriverRoleArn
+          value: "${ebs_driver_role_arn}"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
@@ -18,6 +32,8 @@ kind: Application
 metadata:
   name: namespaces
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
 spec:
   project: default
   source:
@@ -27,12 +43,34 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: default
+  syncPolicy:
+    automated:
+      enabled: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: miracle6
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: HEAD
+    path: apps
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: aws-load-balancer-controller
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   source:
@@ -48,6 +86,223 @@ spec:
           value: "false"
         - name: serviceAccount.name
           value: aws-load-balancer-controller
+      values: |
+        nodeSelector:
+          name: system-node
+        tolerations:
+          - key: CriticalAddonsOnly
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus-kafka-exporter
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: prometheus-kafka-exporter
+      targetRevision: 4.1.0
+      helm:
+        releaseName: prometheus-kafka-exporter
+        valueFiles:
+          - $values/value-files/kafka-exporter/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 91.4.0
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/value-files/prometheus/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: 10.5.15
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - $values/value-files/grafana/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: strimzi-kafka-operator
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://strimzi.io/charts/
+      chart: strimzi-kafka-operator
+      targetRevision: 1.3.0
+      helm:
+        releaseName: strimzi-kafka-operator
+        valueFiles:
+          - $values/value-files/kafka/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: strimzi-system
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elastic-operator
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.elastic.co
+      chart: eck-operator
+      targetRevision: 3.5.0
+      helm:
+        releaseName: elastic-operator
+        valueFiles:
+          - $values/value-files/elasticsearch-operator/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: elastic-system
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fluent-operator
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://fluent.github.io/helm-charts
+      chart: fluent-operator
+      targetRevision: 4.4.0
+      helm:
+        releaseName: fluent-operator
+        valueFiles:
+          - $values/value-files/fluent-operator/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: fluent-bit
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter-crd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: public.ecr.aws/karpenter
+    chart: karpenter-crd
+    targetRevision: 1.15.1
+    helm:
+      releaseName: karpenter-crd
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  source:
+    repoURL: public.ecr.aws/karpenter
+    chart: karpenter
+    targetRevision: 1.15.1
+    helm:
+      releaseName: karpenter
+      skipCrds: true
+      values: |
+        settings:
+          clusterName: ${cluster_name}
+          clusterEndpoint: ${cluster_endpoint}
+        serviceAccount:
+          annotations:
+            eks.amazonaws.com/role-arn: ${karpenter_controller_role}
+        controller:
+          nodeSelector:
+            name: system-node
+          tolerations:
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
