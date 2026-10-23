@@ -42,6 +42,17 @@ terraform plan
 terraform apply
 ```
 
+## Karpenter
+
+The Argo CD configuration deploys the Karpenter Helm chart at version `1.15.0`.
+The EKS Terraform configuration provides the controller's IRSA role, the EC2
+node role, and subnet and security-group discovery tags.
+
+Karpenter does not launch nodes until a `NodePool` and matching `EC2NodeClass`
+are applied to the cluster. Configure those resources in the Kubernetes Git
+repository monitored by Argo CD, and set the `EC2NodeClass.spec.role` to the
+Terraform output `karpenter_node_role_name`.
+
 ## Destroy
 
 ```bash

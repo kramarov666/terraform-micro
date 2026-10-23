@@ -18,6 +18,11 @@ variable "private_subnet_cidrs" {
   type        = list(string)
 }
 
+variable "karpenter_discovery_tag" {
+  description = "Karpenter discovery tag value for private subnets"
+  type        = string
+}
+
 variable "azs" {
   description = "Availability zones"
   type        = list(string)

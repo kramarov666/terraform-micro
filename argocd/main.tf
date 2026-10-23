@@ -12,7 +12,9 @@ locals {
   apps_manifest = templatefile(
     "${path.module}/manifests/argocd/apps.yaml.tftpl",
     {
-      cluster_name = data.terraform_remote_state.eks.outputs.eks_cluster_name
+      cluster_name              = data.terraform_remote_state.eks.outputs.eks_cluster_name
+      cluster_endpoint          = data.terraform_remote_state.eks.outputs.eks_cluster_endpoint
+      karpenter_controller_role = data.terraform_remote_state.eks.outputs.karpenter_controller_role_arn
     }
   )
 }
@@ -47,7 +49,7 @@ resource "helm_release" "argocd" {
     yamlencode({
       controller = {
         nodeSelector = {
-          name = "karpenter-free"
+          name = "system-node"
         }
       }
     })

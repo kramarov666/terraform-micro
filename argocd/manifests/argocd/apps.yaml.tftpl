@@ -51,3 +51,30 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karpenter
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: public.ecr.aws/karpenter
+    chart: karpenter
+    targetRevision: 1.15.0
+    helm:
+      releaseName: karpenter
+      values: |
+        settings:
+          clusterName: ${cluster_name}
+          clusterEndpoint: ${cluster_endpoint}
+        serviceAccount:
+          annotations:
+            eks.amazonaws.com/role-arn: ${karpenter_controller_role}
+        controller:
+          nodeSelector:
+            name: system-node
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
