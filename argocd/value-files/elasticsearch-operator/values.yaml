@@ -1,0 +1,16 @@
+managedNamespaces:
+  - monitoring
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 150Mi
+
+webhook:
+  enabled: true
+
+telemetry:
+  disabled: false

@@ -1,0 +1,28 @@
+# Test configuration. No chart version is pinned; Helm installs the latest chart.
+replicas: 1
+
+persistence:
+  enabled: true
+  size: 2Gi
+
+adminUser: admin
+adminPassword: admin
+
+service:
+  type: ClusterIP
+
+grafana.ini:
+  analytics:
+    check_for_updates: false
+  users:
+    allow_sign_up: false
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-kube-prometheus-prometheus:9090
+        isDefault: true

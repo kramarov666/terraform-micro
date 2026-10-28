@@ -1,0 +1,48 @@
+# Test configuration for prometheus-community/kube-prometheus-stack 91.4.0.
+prometheus:
+  prometheusSpec:
+    replicas: 1
+    retention: 24h
+    storageSpec: {}
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    secrets:
+      - slack-webhook
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: alert-webhook
+      group_by:
+        - alertname
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      routes:
+        - receiver: alert-webhook
+          matchers:
+            - alertname="PrometheusTestCritical"
+            - alertname="KafkaConsumerOffsetNotAdvancing"
+          group_wait: 0s
+    receivers:
+      - name: alert-webhook
+        webhook_configs:
+          - url: http://alert-webhook.ai-investigator.svc.cluster.local:8080/
+            send_resolved: false
+        slack_configs:
+          - api_url_file: /etc/alertmanager/secrets/slack-webhook/url
+            send_resolved: false
+
+grafana:
+  enabled: false
+
+defaultRules:
+  create: false
+
+kubeStateMetrics:
+  enabled: false
+
+nodeExporter:
+  enabled: false

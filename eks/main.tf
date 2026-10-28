@@ -86,6 +86,15 @@ module "eks" {
       max_size       = var.node_group_max_size
       desired_size   = var.node_group_desired_size
       subnet_ids     = module.vpc.private_subnet_ids
+      
+      taints = {
+        critical_addons_only = {
+          key    = "CriticalAddonsOnly"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
+
       labels = {
         name = "system-node"
       }

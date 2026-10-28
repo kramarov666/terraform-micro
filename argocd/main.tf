@@ -51,6 +51,12 @@ resource "helm_release" "argocd" {
         nodeSelector = {
           name = "system-node"
         }
+        tolerations = [{
+          key      = "CriticalAddonsOnly"
+          operator = "Equal"
+          value    = "true"
+          effect   = "NoSchedule"
+        }]
       }
     })
   ]

@@ -1,0 +1,64 @@
+
+# Fluent Bit collects container and logs and sends them to
+# Elasticsearch.
+Kubernetes: true
+containerRuntime: docker
+
+operator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+fluentbit:
+  enable: true
+  input:
+    tail:
+      enable: true
+      path: /var/log/containers/*.log
+      readFromHead: true
+      refreshIntervalSeconds: 10
+      memBufLimit: 5MB
+      skipLongLines: true
+      multilineParser: docker, cri, java
+  output:
+    es:
+      enable: true
+      host: elasticsearch-es-http.monitoring.svc.cluster.local
+      port: 9200
+      logstashFormat: true
+      logstashPrefix: fluentbit
+      suppressTypeName: "On"
+      httpUser:
+        valueFrom:
+          secretKeyRef:
+            name: elasticsearch-fluentd-credentials
+            key: username
+      httpPassword:
+        valueFrom:
+          secretKeyRef:
+            name: elasticsearch-fluentd-credentials
+            key: password
+      tls:
+        enable: true
+        verify: false
+  additionalVolumes:
+  - name: pods
+    hostPath:
+      path: /var/log/pods/
+  additionalVolumeMounts:
+  - name: pods
+    mountPath: /var/log/pods/
+    readOnly: true
+    mountPropagation: HostToContainer
+
+fluentd:
+  enable: false
+  mode: collector
+  replicas: 1
+  output:
+    es:
+      enable: false

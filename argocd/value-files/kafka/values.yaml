@@ -1,0 +1,5 @@
+# Watch only the application namespace for a small test installation.
+watchNamespaces:
+  - miracle6
+watchAnyNamespace: false
+replicas: 1

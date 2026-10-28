@@ -1,0 +1,20 @@
+# Kafka exporter for the single-node Strimzi cluster.
+replicaCount: 1
+
+kafkaServer:
+  - kafka-kafka-bootstrap.miracle6.svc.cluster.local:9092
+
+prometheus:
+  serviceMonitor:
+    enabled: true
+    namespace: monitoring
+    additionalLabels:
+      release: prometheus
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
