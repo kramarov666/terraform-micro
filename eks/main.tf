@@ -55,6 +55,10 @@ module "eks" {
     coredns = {
       configuration_values = jsonencode({
         tolerations = [
+          {
+            key      = "CriticalAddonsOnly"
+            operator = "Exists"
+          },
           # Allow CoreDNS to run on the same nodes as the Karpenter controller
           # for use during cluster creation when Karpenter nodes do not yet exist
           {
@@ -86,7 +90,7 @@ module "eks" {
       max_size       = var.node_group_max_size
       desired_size   = var.node_group_desired_size
       subnet_ids     = module.vpc.private_subnet_ids
-      
+
       taints = {
         critical_addons_only = {
           key    = "CriticalAddonsOnly"
@@ -203,6 +207,8 @@ resource "aws_eks_access_policy_association" "eks-devops-cluster-access" {
   cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   principal_arn = "arn:aws:iam::326130805573:user/devops"
+
+  depends_on = [aws_eks_access_entry.devops]
 
   access_scope {
     type = "cluster"
