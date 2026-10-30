@@ -44,6 +44,7 @@ resource "helm_release" "argocd" {
   namespace        = var.argocd_namespace
   create_namespace = true
   version          = var.argocd_chart_version
+  upgrade_install  = true
 
   values = [
     file("${path.module}/value-files/argocd/values.yaml")
