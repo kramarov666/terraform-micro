@@ -194,14 +194,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://fluent.github.io/helm-charts
-    chart: fluent-operator
-    targetRevision: 3.10.1
-    helm:
-      releaseName: fluent-operator
-      valueFiles:
+  sources:
+    - repoURL: https://fluent.github.io/helm-charts
+      chart: fluent-operator
+      targetRevision: 3.10.1
+      helm:
+        releaseName: fluent-operator
+        valueFiles:
           - $values/value-files/fluent-operator/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: "https://kubernetes.default.svc"
     namespace: fluent-bit
