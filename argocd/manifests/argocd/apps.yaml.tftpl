@@ -31,6 +31,21 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: miracle6
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: HEAD
+    path: apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: aws-load-balancer-controller
   namespace: argocd
   annotations:
