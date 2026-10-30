@@ -1,0 +1,8 @@
+global:
+  nodeSelector:
+    name: system-node
+  tolerations:
+    - key: CriticalAddonsOnly
+      operator: Equal
+      value: "true"
+      effect: NoSchedule

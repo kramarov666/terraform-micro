@@ -46,19 +46,7 @@ resource "helm_release" "argocd" {
   version          = var.argocd_chart_version
 
   values = [
-    yamlencode({
-      controller = {
-        nodeSelector = {
-          name = "system-node"
-        }
-        tolerations = [{
-          key      = "CriticalAddonsOnly"
-          operator = "Equal"
-          value    = "true"
-          effect   = "NoSchedule"
-        }]
-      }
-    })
+    file("${path.module}/value-files/argocd/values.yaml")
   ]
 }
 
