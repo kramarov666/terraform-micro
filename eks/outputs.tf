@@ -48,6 +48,11 @@ output "kms_ebs_key_arn" {
   value       = aws_kms_key.ebs.arn
 }
 
+output "kms_ebs_key_id" {
+  description = "ID of the KMS key for EBS volume encryption"
+  value       = aws_kms_key.ebs.key_id
+}
+
 output "karpenter_controller_role_arn" {
   description = "IAM role ARN assumed by the Karpenter controller through IRSA"
   value       = aws_iam_role.karpenter_controller.arn

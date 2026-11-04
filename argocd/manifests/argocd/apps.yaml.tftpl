@@ -11,6 +11,18 @@ spec:
     repoURL: git@github.com:kramarov666/miracle6-k8s.git
     targetRevision: HEAD
     path: administrative
+    helm:
+      parameters:
+        - name: kmsKeyId
+          value: "${kms_key_id}"
+        - name: karpenterNodeRole
+          value: "${karpenter_node_role_name}"
+        - name: clusterName
+          value: "${cluster_name}"
+        - name: loadBalancerRoleArn
+          value: "${alb_role_arn}"
+        - name: ebsCsiDriverRoleArn
+          value: "${ebs_driver_role_arn}"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
