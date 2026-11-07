@@ -25,7 +25,8 @@ resource "aws_kms_key" "vault_unseal" {
   })
 
   lifecycle {
-    prevent_destroy = true
+    #prevent_destroy = true
+    #Todo move to bootstrap
   }
 }
 
