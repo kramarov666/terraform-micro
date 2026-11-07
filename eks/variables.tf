@@ -55,7 +55,7 @@ variable "node_group_max_size" {
 variable "node_group_instance_types" {
   description = "EC2 instance types for the EKS node group"
   type        = list(string)
-  default     = ["t3.small"]
+  default     = ["c7i-flex.large"]
 }
 
 variable "tags" {
@@ -77,4 +77,16 @@ variable "eks_module_version" {
 variable "cicd_admin_role_arn" {
   description = "ARN of the CI/CD admin role"
   type        = string
+}
+
+variable "vault_unseal_kms_key_arn" {
+  description = "ARN of the KMS key used by Vault for auto-unseal"
+  type        = string
+  default     = "arn:aws:kms:us-east-1:326130805573:key/ffd1cb71-9c5b-43de-b031-58ca812c8dfa"
+}
+
+variable "vault_backup_s3_bucket" {
+  description = "S3 bucket name for Vault backups"
+  type        = string
+  default     = "prod-vault-backups-326130805573-us-east-1"
 }

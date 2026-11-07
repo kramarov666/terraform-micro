@@ -216,7 +216,6 @@ resource "aws_eks_access_policy_association" "eks-devops-cluster-access" {
 }
 
 #EBS csi driver part
-
 resource "aws_iam_policy" "ebs_csi_driver" {
   name = "AmazonEKS_EBS_CSI_DriverPolicy"
 
@@ -288,7 +287,7 @@ resource "aws_iam_role_policy_attachment" "eks_ebs_csi_driver_additional" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"
 }
 
-#Karpenter permission and roles part
+#Karpenter permission and roles part, todo move it to a separate file
 resource "aws_iam_role" "karpenter_node" {
   name = "KarpenterNodeRole-${local.cluster_name}"
 
