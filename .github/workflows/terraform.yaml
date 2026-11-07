@@ -262,4 +262,36 @@ jobs:
     - name: Terraform Apply
       id: apply
       run: terraform apply -no-color argocd_tf_output.tfplan
+
+    - name: Apply application secrets
+      env:
+        AWS_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      run: |
+        set -euo pipefail
+
+        : "${AWS_REGION:?AWS_DEFAULT_REGION must be configured}"
+        : "${OPENAI_API_KEY:?GitHub environment secret OPENAI_API_KEY must be configured}"
+        : "${SLACK_WEBHOOK:?GitHub environment secret SLACK_WEBHOOK must be configured}"
+
+        aws eks update-kubeconfig --name micro-prod-eks --region "$AWS_REGION"
+
+        kubectl create secret generic ai-investigator-openai \
+          --namespace ai-investigator \
+          --from-literal="OPENAI_API_KEY=$OPENAI_API_KEY" \
+          --dry-run=client \
+          --output=yaml | kubectl apply --filename -
+
+        kubectl create secret generic slack-webhook \
+          --namespace ai-investigator \
+          --from-literal="url=$SLACK_WEBHOOK" \
+          --dry-run=client \
+          --output=yaml | kubectl apply --filename -
+
+        kubectl create secret generic slack-webhook \
+          --namespace monitoring \
+          --from-literal="url=$SLACK_WEBHOOK" \
+          --dry-run=client \
+          --output=yaml | kubectl apply --filename -
   
