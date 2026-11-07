@@ -1,11 +1,10 @@
-#Todo move to separate files?
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: administrative
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-3"
 spec:
   project: default
   source:
@@ -34,7 +33,7 @@ metadata:
   name: namespaces
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"
+    argocd.argoproj.io/sync-wave: "-6"
 spec:
   project: default
   source:
@@ -53,6 +52,8 @@ kind: Application
 metadata:
   name: miracle6
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
@@ -71,7 +72,7 @@ metadata:
   name: aws-load-balancer-controller
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: default
   source:
@@ -105,7 +106,7 @@ metadata:
   name: vault
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   source:
@@ -202,6 +203,8 @@ kind: Application
 metadata:
   name: prometheus-kafka-exporter
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   sources:
@@ -227,6 +230,8 @@ kind: Application
 metadata:
   name: kube-prometheus-stack
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   sources:
@@ -253,6 +258,8 @@ kind: Application
 metadata:
   name: grafana
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   sources:
@@ -278,6 +285,8 @@ kind: Application
 metadata:
   name: strimzi-kafka-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   sources:
@@ -303,6 +312,8 @@ kind: Application
 metadata:
   name: elastic-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   sources:
@@ -328,6 +339,8 @@ kind: Application
 metadata:
   name: fluent-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   sources:
@@ -355,7 +368,7 @@ metadata:
   name: karpenter-crd
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: default
   source:
@@ -377,7 +390,7 @@ metadata:
   name: karpenter
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"
+    argocd.argoproj.io/sync-wave: "-4"
 spec:
   project: default
   source:
