@@ -1,3 +1,4 @@
+#Todo move to separate files?
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -97,6 +98,104 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    chart: vault
+    targetRevision: 0.34.1
+    helm:
+      releaseName: vault
+      values: |
+        nodeSelector:
+          name: system-node
+        tolerations:
+          - key: CriticalAddonsOnly
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+        server:
+          serviceAccount:
+            annotations:
+              eks.amazonaws.com/role-arn: "${vault_unseal_role_arn}"
+          extraEnvironmentVars:
+            AWS_REGION: "${aws_region}"
+          standalone:
+            enabled: false
+          ha:
+            enabled: true
+            replicas: 1
+            raft:
+              enabled: true
+              setNodeId: true
+              config: |
+                ui = true
+
+                listener "tcp" {
+                  tls_disable = 1
+                  address = "[::]:8200"
+                  cluster_address = "[::]:8201"
+                }
+
+                storage "raft" {
+                  path = "/vault/data"
+                }
+
+                service_registration "kubernetes" {}
+
+                seal "awskms" {
+                  region = "${aws_region}"
+                  kms_key_id = "${vault_kms_key_arn}"
+                }
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: vault
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  source:
+    repoURL: https://charts.external-secrets.io
+    chart: external-secrets
+    targetRevision: 2.14.0
+    helm:
+      releaseName: external-secrets
+      parameters:
+        - name: installCRDs
+          value: "true"
+      values: |
+        global:
+          nodeSelector:
+            name: system-node
+          tolerations:
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: external-secrets
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
