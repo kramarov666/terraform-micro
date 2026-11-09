@@ -55,7 +55,7 @@ variable "node_group_max_size" {
 variable "node_group_instance_types" {
   description = "EC2 instance types for the EKS node group"
   type        = list(string)
-  default     = ["t3.small"]
+  default     = ["c7i-flex.large"]
 }
 
 variable "tags" {
