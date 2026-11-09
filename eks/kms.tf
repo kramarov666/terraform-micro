@@ -15,26 +15,6 @@ resource "aws_kms_alias" "ebs" {
   target_key_id = aws_kms_key.ebs.key_id
 }
 
-resource "aws_kms_key" "vault_unseal" {
-  description             = "KMS key for Vault auto-unseal in ${var.project_name}-${var.environment}"
-  deletion_window_in_days = 30
-  enable_key_rotation     = true
-
-  tags = merge(var.tags, {
-    Name = "${var.project_name}-${var.environment}-vault-unseal-kms"
-  })
-
-  lifecycle {
-    #prevent_destroy = true
-    #Todo move to bootstrap
-  }
-}
-
-resource "aws_kms_alias" "vault_unseal" {
-  name          = "alias/${var.project_name}-${var.environment}-vault-unseal"
-  target_key_id = aws_kms_key.vault_unseal.key_id
-}
-
 resource "aws_kms_key_policy" "ebs" {
   key_id = aws_kms_key.ebs.id
 

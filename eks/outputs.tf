@@ -53,15 +53,15 @@ output "kms_ebs_key_id" {
   value       = aws_kms_key.ebs.key_id
 }
 
-output "vault_unseal_kms_key_arn" {
-  description = "ARN of the KMS key used by Vault for auto-unseal"
-  value       = aws_kms_key.vault_unseal.arn
-}
+# output "vault_unseal_kms_key_arn" {
+#   description = "ARN of the KMS key used by Vault for auto-unseal"
+#   value       = aws_kms_key.vault_unseal.arn
+# }
 
-output "vault_unseal_role_arn" {
-  description = "ARN of the IAM role assumed by the Vault server service account"
-  value       = aws_iam_role.vault_unseal.arn
-}
+# output "vault_unseal_role_arn" {
+#   description = "ARN of the IAM role assumed by the Vault server service account"
+#   value       = aws_iam_role.vault_unseal.arn
+# }
 
 output "karpenter_controller_role_arn" {
   description = "IAM role ARN assumed by the Karpenter controller through IRSA"
