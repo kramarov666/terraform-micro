@@ -14,7 +14,7 @@ spec:
     helm:
       parameters:
         - name: kmsKeyId
-          value: "${kms_key_id}"
+          value: "${ebs_kms_key_id}"
         - name: karpenterNodeRole
           value: "${karpenter_node_role_name}"
         - name: clusterName

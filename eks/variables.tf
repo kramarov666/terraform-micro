@@ -78,3 +78,9 @@ variable "cicd_admin_role_arn" {
   description = "ARN of the CI/CD admin role"
   type        = string
 }
+
+variable "vault_unseal_kms_key_arn" {
+  description = "ARN of the KMS key used by Vault for auto-unseal"
+  type        = string
+  default     = "arn:aws:kms:us-east-1:326130805573:key/ffd1cb71-9c5b-43de-b031-58ca812c8dfa"
+}
