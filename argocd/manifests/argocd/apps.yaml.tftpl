@@ -118,6 +118,8 @@ spec:
       values: |
         global:
           enabled: false
+          argocd:
+            enabled: true
         server:
           enabled: true
           replicas: 1
@@ -130,13 +132,22 @@ spec:
               operator: Equal
               value: "true"
               effect: NoSchedule
+          affinity: |
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    topologyKey: kubernetes.io/hostname
+                    labelSelector:
+                      matchLabels:
+                        app: consul
+                        release: consul
+                        component: server
         client:
           enabled: false
         ui:
           enabled: false
         connectInject:
-          enabled: false
-        ai:
           enabled: false
   destination:
     server: "https://kubernetes.default.svc"
