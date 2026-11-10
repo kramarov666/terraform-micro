@@ -130,17 +130,6 @@ spec:
               operator: Equal
               value: "true"
               effect: NoSchedule
-          affinity: |
-            podAntiAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-                - weight: 100
-                  podAffinityTerm:
-                    topologyKey: kubernetes.io/hostname
-                    labelSelector:
-                      matchLabels:
-                        app: consul
-                        release: consul
-                        component: server
         client:
           enabled: false
         ui:
