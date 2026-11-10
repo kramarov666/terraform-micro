@@ -150,6 +150,13 @@ spec:
                         release: consul
                         component: server
         connectInject:
+          namespaceSelector: |
+            matchExpressions:
+              - key: "kubernetes.io/metadata.name"
+                operator: "NotIn"
+                values: ["kube-system", "local-path-storage", "openebs", "gmp-system", "gke-managed-cim", "vault"]
+              - key: "openshift.io/cluster-monitoring"
+                operator: "DoesNotExist"
           nodeSelector: |
             name: system-node
           tolerations: |
