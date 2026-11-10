@@ -103,6 +103,60 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  name: consul
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    chart: consul
+    targetRevision: 2.1.0
+    helm:
+      releaseName: consul
+      values: |
+        global:
+          enabled: false
+        server:
+          enabled: true
+          replicas: 1
+          bootstrapExpect: 1
+          storage: 1Gi
+          nodeSelector: |
+            name: system-node
+          tolerations: |
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity: |
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    topologyKey: kubernetes.io/hostname
+                    labelSelector:
+                      matchLabels:
+                        app: consul
+                        release: consul
+                        component: server
+        client:
+          enabled: false
+        ui:
+          enabled: false
+        connectInject:
+          enabled: false
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: consul
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
   name: vault
   namespace: argocd
   annotations:
@@ -134,28 +188,26 @@ spec:
           ha:
             enabled: true
             replicas: 1
-            raft:
-              enabled: true
-              setNodeId: true
-              config: |
-                ui = true
+            config: |
+              ui = true
 
-                listener "tcp" {
-                  tls_disable = 1
-                  address = "[::]:8200"
-                  cluster_address = "[::]:8201"
-                }
+              listener "tcp" {
+                tls_disable = 1
+                address = "[::]:8200"
+                cluster_address = "[::]:8201"
+              }
 
-                storage "raft" {
-                  path = "/vault/data"
-                }
+              storage "consul" {
+                address = "consul-server.consul.svc.cluster.local:8500"
+                path = "vault/"
+              }
 
-                service_registration "kubernetes" {}
+              service_registration "kubernetes" {}
 
-                seal "awskms" {
-                  region = "${aws_region}"
-                  kms_key_id = "${vault_kms_key_arn}"
-                }
+              seal "awskms" {
+                region = "${aws_region}"
+                kms_key_id = "${vault_kms_key_arn}"
+              }
         injector:
           nodeSelector:
             name: system-node
