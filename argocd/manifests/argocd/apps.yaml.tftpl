@@ -154,7 +154,7 @@ spec:
             matchExpressions:
               - key: "kubernetes.io/metadata.name"
                 operator: "NotIn"
-                values: ["kube-system", "local-path-storage", "openebs", "gmp-system", "gke-managed-cim", "vault"]
+                values: ["kube-system", "local-path-storage", "openebs", "gmp-system", "gke-managed-cim", "vault", "external-secrets"]
               - key: "openshift.io/cluster-monitoring"
                 operator: "DoesNotExist"
           nodeSelector: |
