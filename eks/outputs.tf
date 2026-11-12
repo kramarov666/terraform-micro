@@ -63,6 +63,11 @@ output "vault_unseal_role_arn" {
   value       = aws_iam_role.vault_unseal.arn
 }
 
+output "vault_backup_recovery_role_arn" {
+  description = "ARN of the IAM role assumed by the Vault backup recovery service account"
+  value       = aws_iam_role.vault_backup_recovery.arn
+}
+
 output "karpenter_controller_role_arn" {
   description = "IAM role ARN assumed by the Karpenter controller through IRSA"
   value       = aws_iam_role.karpenter_controller.arn

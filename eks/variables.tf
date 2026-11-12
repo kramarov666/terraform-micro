@@ -84,3 +84,9 @@ variable "vault_unseal_kms_key_arn" {
   type        = string
   default     = "arn:aws:kms:us-east-1:326130805573:key/ffd1cb71-9c5b-43de-b031-58ca812c8dfa"
 }
+
+variable "vault_backup_s3_bucket" {
+  description = "S3 bucket name for Vault backups"
+  type        = string
+  default     = "prod-vault-backups-326130805573-us-east-1"
+}

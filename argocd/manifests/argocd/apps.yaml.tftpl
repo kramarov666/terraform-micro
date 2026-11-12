@@ -196,6 +196,8 @@ spec:
       releaseName: vault
       values: |
         server:
+          authDelegator:
+            enabled: true
           nodeSelector:
             name: system-node
           tolerations:
