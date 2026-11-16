@@ -23,6 +23,8 @@ spec:
           value: "${alb_role_arn}"
         - name: ebsCsiDriverRoleArn
           value: "${ebs_driver_role_arn}"
+        - name: vaultBackupRecoveryRoleArn
+          value: "${vault_backup_recovery_role_arn}"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
@@ -189,7 +191,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://helm.releases.hashicorp.com
+
+  - repoURL: https://helm.releases.hashicorp.com
     chart: vault
     targetRevision: 0.34.1
     helm:
@@ -251,12 +254,15 @@ spec:
               operator: Equal
               value: "true"
               effect: NoSchedule
+
+  - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: main
+    ref: manifests
+    path: vault
+
   destination:
     server: "https://kubernetes.default.svc"
     namespace: vault
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application

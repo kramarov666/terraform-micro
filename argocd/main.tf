@@ -22,6 +22,7 @@ locals {
       karpenter_node_role_name  = data.terraform_remote_state.eks.outputs.karpenter_node_role_name
       alb_role_arn              = data.terraform_remote_state.eks.outputs.alb_role_arn
       ebs_driver_role_arn       = data.terraform_remote_state.eks.outputs.ebs_driver_role_arn
+      vault_backup_recovery_role_arn = data.terraform_remote_state.eks.outputs.vault_backup_recovery_role_arn
     }
   )
 }
