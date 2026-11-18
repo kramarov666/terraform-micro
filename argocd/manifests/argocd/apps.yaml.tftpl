@@ -254,6 +254,13 @@ spec:
               operator: Equal
               value: "true"
               effect: NoSchedule
+    
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: keda-admission
+      jqPathExpressions:
+        - '.webhooks[]?.namespaceSelector'
 
   - repoURL: git@github.com:kramarov666/miracle6-k8s.git
     targetRevision: main
