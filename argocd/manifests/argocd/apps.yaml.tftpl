@@ -199,6 +199,9 @@ spec:
       releaseName: vault
       values: |
         server:
+          statefulSet:
+            annotations:
+              argocd.argoproj.io/ignore-healthcheck: "true"
           authDelegator:
             enabled: true
           nodeSelector:
