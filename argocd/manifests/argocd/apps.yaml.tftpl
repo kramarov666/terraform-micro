@@ -200,7 +200,7 @@ spec:
       values: |
         server:
           annotations:
-            argocd.argoproj.io/ignore-healthcheck: "true"
+            argocd.argoproj.io/sync-options: SkipHealthCheck=true
           authDelegator:
             enabled: true
           nodeSelector:
