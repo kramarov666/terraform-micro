@@ -263,10 +263,10 @@ spec:
     namespace: vault
   ignoreDifferences:
     - group: admissionregistration.k8s.io
-      kind: ValidatingWebhookConfiguration
-      name: keda-admission
+      kind: MutatingWebhookConfiguration
+      name: vault-agent-injector-cfg
       jqPathExpressions:
-        - '.webhooks[]?.namespaceSelector'
+        - .webhooks[]?.clientConfig.caBundle
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
