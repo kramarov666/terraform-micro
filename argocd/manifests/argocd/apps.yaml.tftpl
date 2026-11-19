@@ -259,10 +259,12 @@ spec:
               operator: Equal
               value: "true"
               effect: NoSchedule
+
   - repoURL: git@github.com:kramarov666/miracle6-k8s.git
     targetRevision: main
     ref: manifests
     path: vault
+
   destination:
     server: "https://kubernetes.default.svc"
     namespace: vault
@@ -481,13 +483,17 @@ spec:
     - repoURL: git@github.com:kramarov666/miracle6-k8s.git
       targetRevision: HEAD
       ref: values
+    
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: fluent-bit-manifests
+      path: fluent-bit
 
   destination:
     server: "https://kubernetes.default.svc"
     namespace: fluent-bit
   syncPolicy:
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
