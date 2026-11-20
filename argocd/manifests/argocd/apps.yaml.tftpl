@@ -101,6 +101,25 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: kube-system
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: aws-load-balancer-tls
+      namespace: kube-system
+      jqPathExpressions:
+        - .data
+
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: aws-load-balancer-webhook
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
+
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: aws-load-balancer-webhook
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
