@@ -15,10 +15,14 @@ locals {
       cluster_name              = data.terraform_remote_state.eks.outputs.eks_cluster_name
       cluster_endpoint          = data.terraform_remote_state.eks.outputs.eks_cluster_endpoint
       karpenter_controller_role = data.terraform_remote_state.eks.outputs.karpenter_controller_role_arn
-      kms_key_id                = data.terraform_remote_state.eks.outputs.kms_ebs_key_id
+      ebs_kms_key_id            = data.terraform_remote_state.eks.outputs.kms_ebs_key_id
+      vault_kms_key_arn         = data.terraform_remote_state.eks.outputs.vault_unseal_kms_key_arn
+      vault_unseal_role_arn     = data.terraform_remote_state.eks.outputs.vault_unseal_role_arn
+      aws_region                = var.aws_region
       karpenter_node_role_name  = data.terraform_remote_state.eks.outputs.karpenter_node_role_name
       alb_role_arn              = data.terraform_remote_state.eks.outputs.alb_role_arn
       ebs_driver_role_arn       = data.terraform_remote_state.eks.outputs.ebs_driver_role_arn
+      vault_backup_recovery_role_arn = data.terraform_remote_state.eks.outputs.vault_backup_recovery_role_arn
     }
   )
 }

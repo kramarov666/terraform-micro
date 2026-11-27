@@ -262,4 +262,3 @@ jobs:
     - name: Terraform Apply
       id: apply
       run: terraform apply -no-color argocd_tf_output.tfplan
-  
