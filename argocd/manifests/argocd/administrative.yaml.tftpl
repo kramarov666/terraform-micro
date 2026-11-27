@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: administrative
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: HEAD
+    path: administrative
+    helm:
+      parameters:
+        - name: kmsKeyId
+          value: "${ebs_kms_key_id}"
+        - name: karpenterNodeRole
+          value: "${karpenter_node_role_name}"
+        - name: clusterName
+          value: "${cluster_name}"
+        - name: ebsCsiDriverRoleArn
+          value: "${ebs_driver_role_arn}"
+        - name: vaultBackupRecoveryRoleArn
+          value: "${vault_backup_recovery_role_arn}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system

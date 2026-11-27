@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  sources:
+
+  - repoURL: https://helm.releases.hashicorp.com
+    chart: vault
+    targetRevision: 0.34.1
+    helm:
+      releaseName: vault
+      values: |
+        server:
+          annotations:
+            argocd.argoproj.io/sync-options: SkipHealthCheck=true
+          statefulSet:
+            annotations:
+              argocd.argoproj.io/sync-options: SkipHealthCheck=true
+          authDelegator:
+            enabled: true
+          nodeSelector:
+            name: system-node
+          tolerations:
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          serviceAccount:
+            annotations:
+              eks.amazonaws.com/role-arn: "${vault_unseal_role_arn}"
+          extraEnvironmentVars:
+            AWS_REGION: "${aws_region}"
+          standalone:
+            enabled: false
+          ha:
+            enabled: true
+            replicas: 1
+            config: |
+              ui = true
+
+              listener "tcp" {
+                tls_disable = 1
+                address = "[::]:8200"
+                cluster_address = "[::]:8201"
+              }
+
+              storage "consul" {
+                address = "consul-consul-server.consul.svc.cluster.local:8500"
+                path = "vault/"
+              }
+
+              service_registration "kubernetes" {}
+
+              seal "awskms" {
+                region = "${aws_region}"
+                kms_key_id = "${vault_kms_key_arn}"
+              }
+        injector:
+          nodeSelector:
+            name: system-node
+          tolerations:
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+        csi:
+          nodeSelector:
+            name: system-node
+          tolerations:
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+
+  - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+    targetRevision: main
+    ref: manifests
+    path: vault
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: vault
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: vault-agent-injector-cfg
+      jqPathExpressions:
+        - .webhooks[]?.clientConfig.caBundle
