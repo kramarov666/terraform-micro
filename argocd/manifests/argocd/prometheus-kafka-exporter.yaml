@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus-kafka-exporter
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: prometheus-kafka-exporter
+      targetRevision: 4.1.0
+      helm:
+        releaseName: prometheus-kafka-exporter
+        valueFiles:
+          - $values/value-files/kafka-exporter/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

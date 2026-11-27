@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fluent-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  sources:
+
+    - repoURL: https://fluent.github.io/helm-charts
+      chart: fluent-operator
+      targetRevision: 4.4.0
+      helm:
+        releaseName: fluent-operator
+        valueFiles:
+          - $values/value-files/fluent-operator/values.yaml
+
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+    
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: fluent-bit-manifests
+      path: fluent-bit
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: fluent-bit
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true

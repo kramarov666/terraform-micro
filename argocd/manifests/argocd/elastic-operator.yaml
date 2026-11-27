@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elastic-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.elastic.co
+      chart: eck-operator
+      targetRevision: 3.5.0
+      helm:
+        releaseName: elastic-operator
+        valueFiles:
+          - $values/value-files/elasticsearch-operator/values.yaml
+    - repoURL: git@github.com:kramarov666/miracle6-k8s.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: elastic-system
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

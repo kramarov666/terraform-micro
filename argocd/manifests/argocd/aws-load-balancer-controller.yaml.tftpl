@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-load-balancer-controller
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  project: default
+  source:
+    chart: aws-load-balancer-controller
+    repoURL: https://aws.github.io/eks-charts
+    targetRevision: 3.5.0
+    helm:
+      releaseName: aws-load-balancer-controller
+      parameters:
+        - name: clusterName
+          value: "${cluster_name}"
+        - name: serviceAccount.create
+          value: "false"
+        - name: serviceAccount.name
+          value: aws-load-balancer-controller
+      values: |
+        nodeSelector:
+          name: system-node
+        tolerations:
+          - key: CriticalAddonsOnly
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: kube-system
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: aws-load-balancer-tls
+      namespace: kube-system
+      jqPathExpressions:
+        - .data
+
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: aws-load-balancer-webhook
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
+
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: aws-load-balancer-webhook
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle

@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: consul
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    chart: consul
+    targetRevision: 2.1.0
+    helm:
+      releaseName: consul
+      values: |
+        global:
+          enabled: true
+          argocd:
+            enabled: true
+          acls:
+            tolerations: |
+              - key: CriticalAddonsOnly
+                operator: Equal
+                value: "true"
+                effect: NoSchedule
+        server:
+          enabled: true
+          replicas: 1
+          bootstrapExpect: 1
+          storage: 1Gi
+          nodeSelector: |
+            name: system-node
+          tolerations: |
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+          affinity: |
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    topologyKey: kubernetes.io/hostname
+                    labelSelector:
+                      matchLabels:
+                        app: consul
+                        release: consul
+                        component: server
+        connectInject:
+          enabled: false
+        webhookCertManager:
+          nodeSelector: |
+            name: system-node
+          tolerations: |
+            - key: CriticalAddonsOnly
+              operator: Equal
+              value: "true"
+              effect: NoSchedule
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: consul
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

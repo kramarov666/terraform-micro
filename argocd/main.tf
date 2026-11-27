@@ -9,22 +9,43 @@ data "terraform_remote_state" "eks" {
 }
 
 locals {
-  apps_manifest = templatefile(
-    "${path.module}/manifests/argocd/apps.yaml.tftpl",
-    {
-      cluster_name              = data.terraform_remote_state.eks.outputs.eks_cluster_name
-      cluster_endpoint          = data.terraform_remote_state.eks.outputs.eks_cluster_endpoint
-      karpenter_controller_role = data.terraform_remote_state.eks.outputs.karpenter_controller_role_arn
-      ebs_kms_key_id            = data.terraform_remote_state.eks.outputs.kms_ebs_key_id
-      vault_kms_key_arn         = data.terraform_remote_state.eks.outputs.vault_unseal_kms_key_arn
-      vault_unseal_role_arn     = data.terraform_remote_state.eks.outputs.vault_unseal_role_arn
-      aws_region                = var.aws_region
-      karpenter_node_role_name  = data.terraform_remote_state.eks.outputs.karpenter_node_role_name
-      alb_role_arn              = data.terraform_remote_state.eks.outputs.alb_role_arn
-      ebs_driver_role_arn       = data.terraform_remote_state.eks.outputs.ebs_driver_role_arn
-      vault_backup_recovery_role_arn = data.terraform_remote_state.eks.outputs.vault_backup_recovery_role_arn
-    }
-  )
+  application_template_variables = {
+    cluster_name                   = data.terraform_remote_state.eks.outputs.eks_cluster_name
+    cluster_endpoint               = data.terraform_remote_state.eks.outputs.eks_cluster_endpoint
+    karpenter_controller_role      = data.terraform_remote_state.eks.outputs.karpenter_controller_role_arn
+    ebs_kms_key_id                 = data.terraform_remote_state.eks.outputs.kms_ebs_key_id
+    vault_kms_key_arn              = data.terraform_remote_state.eks.outputs.vault_unseal_kms_key_arn
+    vault_unseal_role_arn          = data.terraform_remote_state.eks.outputs.vault_unseal_role_arn
+    aws_region                     = var.aws_region
+    karpenter_node_role_name       = data.terraform_remote_state.eks.outputs.karpenter_node_role_name
+    alb_role_arn                   = data.terraform_remote_state.eks.outputs.alb_role_arn
+    ebs_driver_role_arn            = data.terraform_remote_state.eks.outputs.ebs_driver_role_arn
+    vault_backup_recovery_role_arn = data.terraform_remote_state.eks.outputs.vault_backup_recovery_role_arn
+  }
+
+  templated_apps = [
+    templatefile("${path.module}/manifests/argocd/administrative.yaml.tftpl", local.application_template_variables),
+    templatefile("${path.module}/manifests/argocd/aws-load-balancer-service-account.yaml.tftpl", local.application_template_variables),
+    templatefile("${path.module}/manifests/argocd/aws-load-balancer-controller.yaml.tftpl", local.application_template_variables),
+    templatefile("${path.module}/manifests/argocd/vault.yaml.tftpl", local.application_template_variables),
+    templatefile("${path.module}/manifests/argocd/karpenter/karpenter.yaml.tftpl", local.application_template_variables),
+  ]
+
+  static_apps = [
+    file("${path.module}/manifests/argocd/namespaces.yaml"),
+    file("${path.module}/manifests/argocd/miracle6.yaml"),
+    file("${path.module}/manifests/argocd/consul.yaml"),
+    file("${path.module}/manifests/argocd/external-secrets.yaml"),
+    file("${path.module}/manifests/argocd/prometheus-kafka-exporter.yaml"),
+    file("${path.module}/manifests/argocd/kube-prometheus-stack.yaml"),
+    file("${path.module}/manifests/argocd/grafana.yaml"),
+    file("${path.module}/manifests/argocd/strimzi-kafka-operator.yaml"),
+    file("${path.module}/manifests/argocd/elastic-operator.yaml"),
+    file("${path.module}/manifests/argocd/fluent-operator.yaml"),
+    file("${path.module}/manifests/argocd/karpenter/karpenter-crd.yaml"),
+  ]
+
+  apps_manifest = join("\n---\n", concat(local.templated_apps, local.static_apps))
 }
 
 provider "helm" {
